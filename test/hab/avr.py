@@ -34,13 +34,15 @@ class AVR(object):
 	def __init__(self):
 		 self.__GPSPosition = {'time': '00:00:00', 'lat': 0.0, 'lon': 0.0, 'alt': 0, 'sats': 0}
 		 self.__HABPosition = {'id': '', 'count': 0, 'time': '00:00:00', 'lat': 0.0, 'lon': 0.0, 'alt': 0}
+		 self.__CurrentRSSI = None
 	
-	def __ProcessLine(self, Line):
-		if Line[0:2] == '$$':
+	def __ProcessLine(self, Line):	
+		if Line[0] == '$':
 			if PayloadChecksumOK(Line):
-				Fields = Line.split(',')
+				Temp = Line.strip('$')
+				Fields = Temp.split(',')
 				
-				self.__HABPosition['id'] = Fields[0][2:]
+				self.__HABPosition['id'] = Fields[0]
 				self.__HABPosition['count'] = int(Fields[1])
 				self.__HABPosition['time'] = Fields[2]
 				self.__HABPosition['lat'] = float(Fields[3])
@@ -49,7 +51,7 @@ class AVR(object):
 				print self.__HABPosition
 			else:
 				print "Bad checksum"
-		elif Line[0] == '$':
+		elif Line[0] == '!':
 			if GPSChecksumOK(Line):
 				if Line[3:6] == "GGA":
 					# $GNGGA,213511.00,5157.01416,N,00232.65975,W,1,12,0.64,149.8,M,48.6,M,,*55
@@ -71,6 +73,8 @@ class AVR(object):
 					print "Unknown NMEA sentence from AVR: " + Line
 			else:
 				print "Bad checksum"
+		elif Line[0] == '^':
+			self.__CurrentRSSI = int(Line[1:].rstrip())
 		else:
 			print "Unknown message from AVR: " + Line
 			
@@ -83,7 +87,7 @@ class AVR(object):
 				Character = chr(Byte)
 				if Byte == 255:
 					sleep(0.1)
-				elif (Character == '$') and (Line != '$'):
+				elif Character in ('$', '!', '^'):
 					Line = Character
 				elif len(Line) > 90:
 					Line = ''
@@ -105,6 +109,9 @@ class AVR(object):
 			
 	def GPSPosition(self):
 		return self.__GPSPosition
+		
+	def CurrentRSSI(self):
+		return self.__CurrentRSSI
 			
 	def run(self):
 		t = threading.Thread(target=self.__lora_thread)

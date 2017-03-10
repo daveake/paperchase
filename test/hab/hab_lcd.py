@@ -75,8 +75,11 @@ while True:
 			LastPositionAt = datetime.utcnow()
 		
 		if LastPositionAt:
-			draw.rectangle(((0,72),(x0,95)), fill="white", outline = "white")
-			draw.text((0,72), str(int((datetime.utcnow() - LastPositionAt).total_seconds())) + ' s', font=time_font, fill=BLACK)
+			draw.rectangle(((0,55),(x0,74)), fill="white", outline = "white")
+			Seconds = int((datetime.utcnow() - LastPositionAt).total_seconds())
+			print "Seconds=", Seconds
+			if Seconds < 1000:
+				draw.text((2,55), str(Seconds) + ' s', font=time_font, fill=BLACK)
 		
 		if GPSPosition['sats'] > 0:
 		
@@ -96,10 +99,22 @@ while True:
 	
 			#------------ Distance ------------
 			
-			draw.rectangle(((0,36),(x0-1,59)), fill="white", outline = "white")
-			draw.text((0,36), str(int(DistanceToHAB)) + 'm', font=payload_font, fill=BLACK)
+			draw.rectangle(((0,25),(x0-1,49)), fill="white", outline = "white")
+			draw.text((0,25), str(int(DistanceToHAB)) + 'm', font=payload_font, fill=BLACK)
 
 	
+	#------------ Current RSSI ----------
+	
+		CurrentRSSI	= avr.CurrentRSSI()
+		if CurrentRSSI:
+			draw.rectangle(((0,75),(x0,95)), fill="white", outline = "white")
+			Bars = min(10,max(0,((CurrentRSSI + 110) // 4)))
+			print CurrentRSSI, Bars
+			for i in range(Bars):
+				Left = i * 9 + 4
+				Height = (i+1) * 2
+				draw.rectangle(((Left,95-Height),(Left+7,95)), fill="black", outline = "black")
+			
 	#------------ Update display ----------
 	
 	papirus.display(image)
